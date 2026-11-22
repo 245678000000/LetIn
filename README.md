@@ -46,7 +46,19 @@
 
 ## 安装
 
-### 从源码构建（推荐）
+### 直接下载
+
+到 [Releases](https://github.com/245678000000/LetIn/releases/latest) 下载 `LetIn-x.x.x.zip`，解压后把 **放行.app** 拖到「应用程序」文件夹。
+
+放行本身也没有经过 Apple 公证，所以**第一次打开**同样会被拦截。在终端执行一次下面的命令就好：
+
+```sh
+xattr -cr /Applications/放行.app
+```
+
+或者先双击一次，然后打开「系统设置 › 隐私与安全性」，在页面底部点击“仍要打开”。
+
+### 从源码构建
 
 需要 macOS 14 以上，并安装 Xcode Command Line Tools（`xcode-select --install`）。
 
