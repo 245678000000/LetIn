@@ -110,7 +110,8 @@ final class Fixer: ObservableObject {
                     needAdmin = true
                     break
                 }
-                return (.failed(shortError(r.output)), "")
+                let prefix = tool.hasSuffix("codesign") ? "重新签名失败：" : "清除失败："
+                return (.failed(prefix + shortError(r.output, path: path)), "")
             }
         }
 
@@ -171,8 +172,16 @@ final class Fixer: ObservableObject {
         "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
     }
 
-    nonisolated static func shortError(_ s: String) -> String {
-        let line = s.split(separator: "\n").first.map(String.init) ?? s
+    nonisolated static func shortError(_ s: String, path: String = "") -> String {
+        var line = s.split(separator: "\n").first.map(String.init) ?? s
+        if !path.isEmpty {
+            // 去掉输出里冗长的文件路径（含 /private 前缀的形式）
+            for p in ["/private" + path, path] { line = line.replacingOccurrences(of: p, with: "") }
+            line = line.trimmingCharacters(in: CharacterSet(charactersIn: ": ").union(.whitespaces))
+        }
+        if line.contains("bundle format unrecognized") || line.contains("not signable") {
+            return "不是有效的 App 包"
+        }
         return line.isEmpty ? "处理失败" : String(line.prefix(120))
     }
 }
@@ -291,15 +300,15 @@ struct ContentView: View {
 
     private var footer: some View {
         HStack {
-            Toggle(isOn: $fixer.resign) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("同时重新签名").font(.system(size: 12, weight: .medium))
-                    Text("提示“已损坏”时打开").font(.system(size: 10)).foregroundStyle(.secondary)
-                }
+            VStack(alignment: .leading, spacing: 1) {
+                Text("同时重新签名").font(.system(size: 12, weight: .medium))
+                Text("提示“已损坏”时打开").font(.system(size: 10)).foregroundStyle(.secondary)
             }
-            .toggleStyle(.switch)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .controlSize(.small)
+            Spacer()
+            Toggle("同时重新签名", isOn: $fixer.resign)
+                .labelsHidden()
+                .toggleStyle(.switch)
+                .controlSize(.small)
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.primary.opacity(0.04)))
